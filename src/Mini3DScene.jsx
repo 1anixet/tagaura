@@ -92,6 +92,11 @@ export default function Mini3DScene({ variant = 'focus' }) {
   const mountRef = useRef(null)
   useEffect(() => {
     const mount = mountRef.current
+    let started = false
+    let disposeScene = () => {}
+    const startScene = () => {
+      if (started) return
+      started = true
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(32, mount.clientWidth / mount.clientHeight, .1, 50)
     camera.position.set(4.5, 3.25, 5.8)
@@ -129,8 +134,6 @@ export default function Mini3DScene({ variant = 'focus' }) {
     let frame = 0
     let visible = true
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting }, { threshold: .05 })
-    observer.observe(mount)
     const animate = (time) => {
       frame = requestAnimationFrame(animate)
       if (!visible) return
@@ -148,7 +151,14 @@ export default function Mini3DScene({ variant = 'focus' }) {
     const resize = () => { camera.aspect = mount.clientWidth / mount.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(mount.clientWidth, mount.clientHeight) }
     window.addEventListener('resize', resize)
     animate(0)
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); mount.removeEventListener('pointermove', onPointerMove); window.removeEventListener('resize', resize); renderer.dispose(); mount.removeChild(renderer.domElement) }
+    disposeScene = () => { cancelAnimationFrame(frame); mount.removeEventListener('pointermove', onPointerMove); window.removeEventListener('resize', resize); renderer.dispose(); if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement); started = false }
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) startScene()
+      else disposeScene()
+    }, { rootMargin: '180px 0px', threshold: .01 })
+    observer.observe(mount)
+    return () => { observer.disconnect(); disposeScene() }
   }, [variant])
   return <div className={`mini-3d mini-3d-${variant}`} ref={mountRef} aria-label={`Animated 3D ${variant} NFC concept`} />
 }

@@ -42,7 +42,7 @@ export default function ThreeHeroScene() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7))
     renderer.setSize(mount.clientWidth, mount.clientHeight)
     renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.shadowMap.type = THREE.PCFShadowMap
     mount.appendChild(renderer.domElement)
 
     scene.add(new THREE.HemisphereLight(0x8ac8ff, 0x06101a, 1.2))
